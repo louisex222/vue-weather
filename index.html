@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="/css/bootstrap.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.0-2/css/all.min.css">
+
+    <style>
+      
+     *{
+         font-family: 微軟正黑體;
+     }
+       body{
+           padding: 20px;
+           background: linear-gradient(to right, #dae2f8, #d6a4a4)
+       } 
+       .card{
+           border: 1px solid #000;
+           font-weight: 900;
+       }
+       .card-header{
+        background: linear-gradient(to left, #dae2f8, #d6a4a4)
+       }
+    .status-aqi2 {
+    background-color: #ffff00;
+    }
+    .status-aqi3 {
+    background-color: #ff7e00;
+    }
+    .status-aqi4 {
+    background-color: #ff0000;
+    }
+    .status-aqi5 {
+    background-color: #8f3f97;
+    }
+    .status-aqi6 {
+    background-color: #7e0023;
+    }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <select name="" id="" class="form-control mb-3" v-model="select">
+            <option value="">--- 請選擇城市 ---</option>
+            <option value="全部">全部</option>
+            <option  :value="item" v-for="item in county">{{item}}</option>
+        </select>
+
+        
+        <h4>關注城市</h4>
+
+        <div class="card-columns">
+            <select-list class="card"  v-for="(item,key) in starData" :infro="item"
+            @star="favorStar"
+            :key="key">
+                <template slot="icon">
+                    <i class="fas fa-star-half"></i>
+                </template>
+            </select-list>   
+        </div>
+        
+        <hr>
+
+        <div class="card-columns">
+           <select-list class="card" 
+           v-for="item in filterData" :infro="item"
+           @star="favorStar"
+           >
+           </select-list>   
+        </div>
+
+    </div>
+
+    <script type="text/x-template" id="list">  
+        <div class="card" >      
+            <div class="card-header">
+                {{infro.County}} -- {{infro.SiteName}}
+                <a href="#" class="float-right"  @click="edit">
+                    <slot name="icon">
+                        <i class="far fa-star"></i>
+                    </slot>
+                </a>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li>AQI 指數: {{infro.AQI}}</li>
+                    <li>PM2.5: {{infro['PM2.5']}}</li>
+                    <li>說明: {{infro.Status}}</li>
+                </ul>
+                {{infro.PublishTime}}
+            </div>
+        </div>
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.11/vue.min.js"></script>
+    
+    
+    <script>
+        Vue.config.devtools = true
+        Vue.component('select-list',{
+            props:['infro'],
+            template:'#list',
+            methods:{
+                edit(){
+                    this.$emit('star',this.infro)
+                }
+            }
+        })
+        let vm = new Vue({
+            el:'#app',
+            data:{
+                list:[],
+                listArr:[],
+                county:[],
+                select:'',
+                starArr:[]
+            },
+            methods:{
+                getData(){
+                    fetch('http://opendata2.epa.gov.tw/AQI.json')
+                    .then(res=> res.json())
+                    .then(data=>{
+                        this.list = data
+                        this.list.forEach(item=>{
+                            this.listArr.push(item.County)
+                        })
+                        this.listArr.filter((value,index,arr)=>{
+                            if(arr.indexOf(value)==index){
+                                this.county.push(value)
+                            }
+                        })
+                      
+                    })
+                },
+                favorStar(star){
+                    let index = this.starArr.findIndex(item=>{
+                        return  star.SiteName  == item
+                    })
+                    if(this.starArr.indexOf(star.SiteName) == -1){
+                         this.starArr.push(star.SiteName)
+                    }else{
+                        this.starArr.splice(index,1)
+                    }
+                    console.log(index)
+                    
+                }
+            },
+            computed:{
+                filterData(){
+                    if(this.select =="全部"){
+                     return   this.list.filter(item=>{
+                           return  this.starArr.indexOf(item.SideName) == -1
+                        })
+                    }else{
+                       return this.list.filter(item=>{
+                            if(this.select == item.County){
+                              return  this.starArr.indexOf(item.SideName)==-1
+                            }
+                        })
+                    }
+                    
+                },
+                starData(){
+                return  this.list.filter((value)=>{
+                 return   this.starArr.indexOf(value.SiteName)  > -1
+               })
+                }
+                
+            },
+            created(){
+                this.getData()
+                console.log(this.starData)
+            }
+        })
+        let arr1 = [1,2,3,4,5]
+       
+
+       console.log(arr1.findIndex((el)=> el > 3))
+
+    </script>
+</body>
+</html>
