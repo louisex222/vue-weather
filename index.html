@@ -119,7 +119,7 @@
             },
             methods:{
                 getData(){
-                    fetch('http://opendata2.epa.gov.tw/AQI.json')
+                    fetch('https://opendata2.epa.gov.tw/AQI.json')
                     .then(res=> res.json())
                     .then(data=>{
                         this.list = data
